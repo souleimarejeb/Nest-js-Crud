@@ -7,7 +7,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    // TypeOrmModule.forRootAsync(ConnectionConfiguration)
+    // TypeOrmModule.forRootAsync(ConnectionConfiguration) // uncomment this if you want to use the data-source.ts
+    // else use this directly 
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DB_HOST,
