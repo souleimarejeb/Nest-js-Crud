@@ -146,7 +146,7 @@ export class UserEntity extends BaseEntity {
 
 ### 6. Configure TypeORM in App Module
 
-Update your [`src/modules/app/app.module.ts`](src/modules/app/app.module.ts) to include TypeORM configuration:
+Update your [`src/modules/app/app.module.ts`](src/modules/app/app.module.ts) to include TypeORM configuration using the `dataSourceOptions`:
 
 ```typescript
 import { Module } from '@nestjs/common';
@@ -155,20 +155,12 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from '../user/user.module';
+import { dataSourceOptions } from '../../database/config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      entities: ['dist/**/**/*.entity{.ts,.js}'],
-      synchronize: true,
-    }),
+    TypeOrmModule.forRoot(dataSourceOptions),
     UserModule,
   ],
   controllers: [AppController],
@@ -177,6 +169,8 @@ import { UserModule } from '../user/user.module';
 export class AppModule {
 }
 ```
+
+**Note:** This approach is cleaner as it reuses the `dataSourceOptions` from your database configuration file, avoiding duplication and making the configuration more maintainable.
 
 ### 7. Create Service Layer
 
@@ -279,77 +273,6 @@ import { UserEntity } from '../../database/models/user.entity';
 export class UserModule {}
 ```
 
-### 10. Set Up Migrations (Optional)
-
-If you want to use migrations instead of `synchronize: true`, install the required packages:
-
-```bash
-npm install --save-dev typeorm-ts-node-commonjs ts-node tsconfig-paths
-```
-
-Add migration scripts to your [`package.json`](package.json):
-
-```json
-{
-  "scripts": {
-    "migration:generate": "typeorm-ts-node-commonjs migration:generate src/database/migrations/InitialMigration -d src/database/config.ts",
-    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/config.ts",
-    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/config.ts"
-  }
-}
-```
-
-### 11. Set Up Seeding (Optional)
-
-Install seeding dependencies:
-
-```bash
-npm install --save-dev typeorm-extension
-```
-
-Create seeders in the [`src/database/seeders/`](src/database/seeders/) directory and add a seed script to your [`package.json`](package.json):
-
-```json
-{
-  "scripts": {
-    "seed": "ts-node -r tsconfig-paths/register src/database/run-seeders.ts"
-  }
-}
-```
-
-### 12. Database Setup
-
-1. Create a MySQL database:
-```sql
-CREATE DATABASE your_database_name;
-```
-
-2. Ensure your MySQL server is running and accessible with the credentials specified in your `.env` file.
-
-### 13. Run the Application
-
-1. Install dependencies:
-```bash
-npm install
-```
-
-2. Start the development server:
-```bash
-npm run start:dev
-```
-
-The application will be available at `http://localhost:3000`.
-
-## Available Scripts
-
-- `npm run start:dev` - Start development server with hot reload
-- `npm run build` - Build the application
-- `npm run start:prod` - Start production server
-- `npm run migration:generate` - Generate a new migration
-- `npm run migration:run` - Run pending migrations
-- `npm run migration:revert` - Revert the last migration
-- `npm run seed` - Run database seeders
-
 ## Project Structure
 
 ```
@@ -380,28 +303,3 @@ src/
 - `POST /users` - Create a new user
 - `PUT /users/:id` - Update user by ID
 - `DELETE /users/:id` - Delete user by ID
-
-## Environment Variables
-
-Make sure to set up the following environment variables in your `.env` file:
-
-- `DB_HOST` - MySQL host (default: localhost)
-- `DB_PORT` - MySQL port (default: 3306)
-- `DB_USERNAME` - MySQL username
-- `DB_PASSWORD` - MySQL password
-- `DB_NAME` - MySQL database name
-- `PORT` - Application port (default: 3000)
-- `NODE_ENV` - Environment (development/production)
-
-## Troubleshooting
-
-1. **Connection refused**: Ensure MySQL server is running and accessible
-2. **Authentication failed**: Verify your MySQL credentials in the `.env` file
-3. **Database not found**: Create the database before running the application
-4. **Port already in use**: Change the port in your `.env` file or stop the conflicting service
-
-## Additional Resources
-
-- [NestJS Documentation](https://docs.nestjs.com/)
-- [TypeORM Documentation](https://typeorm.io/)
-- [MySQL Documentation](https://dev.mysql.com/doc/)
