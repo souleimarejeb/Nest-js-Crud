@@ -74,12 +74,16 @@ This class implements the NestMiddleware interface and uses the UsersService to 
 ### 2.Configure the Middleware
 Open the file:
 ```ts
-src/modules/users/users.module.ts
-
+Update your `src/modules/users/users.module.ts` to register the middleware.
 ```
-And configure the middleware like this:
+
+You can specify **where** to apply the middleware by indicating the controller or particular routes,  
+and use `.exclude()` to skip specific paths or HTTP methods where the middleware shouldn’t run.
+
+For example, to apply the middleware to all routes in `UsersController` except for `POST /v1/users` (user creation) and `GET /v1/users` (listing users), configure it like this:
 
 ```ts
+
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
