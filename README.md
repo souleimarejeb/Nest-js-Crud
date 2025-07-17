@@ -165,6 +165,3 @@ Following this convention keeps your API clean, consistent, and RESTful.
 
 - [Swagger UI](https://swagger.io/tools/swagger-ui/)  
   Interactive API documentation tool
-
-- [REST API Best Practices](https://www.freecodecamp.org/news/rest-api-best-practices/)  
-  Guide to building better REST APIs
