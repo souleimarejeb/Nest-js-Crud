@@ -1,6 +1,19 @@
-# Swagger: Open Source Tool for API Design & Documentation at Scale
-Swagger is an open-source tool that helps you design, document, and test REST APIs at scale.
-This guide shows how to integrate Swagger with a NestJS application.
+# Swagger Integration for NestJS REST APIs
+
+Swagger is an open-source toolset that helps you design, build, document, and consume RESTful APIs. 
+This guide demonstrates how to integrate Swagger with a NestJS application to generate interactive API documentation.
+
+
+## Table of Contents
+- [Installation](#installation)
+- [Basic Setup](#basic-setup)
+- [API Documentation](#api-documentation)
+  - [Controllers and Routes](#controllers-and-routes)
+  - [Data Models](#data-models)
+  - [Responses and Request Bodies](#responses-and-request-bodies)
+- [RESTful API Design Best Practices](#restful-api-design-best-practices)
+- [Accessing Swagger UI](#accessing-swagger-ui)
+- [Additional Resources](#additional-resources)
 
 
 ## 1.Installation 
@@ -37,9 +50,9 @@ async function bootstrap() {
 bootstrap();
 
 ``` 
-###Note:
+### Note:
 SwaggerModule.createDocument() generates the Swagger document based on your app's routes and metadata.
-SwaggerModule.setup('api', …) serves the Swagger UI at /api.
+SwaggerModule.setup('api', ...) serves the Swagger UI at /api.
 
 Run the following command to start the HTTP server:
 
@@ -57,7 +70,7 @@ Swagger UI will automatically reflect all your endpoints.
 
 ## 3.Annotating APIs with Swagger Decorators
 
-### controllers and routes 
+### 3.1-controllers and routes 
 
 Decorate your controllers and routes with appropriate Swagger decorators to group and describe them:
 
@@ -76,7 +89,7 @@ export class UserController {
 }
 ```
 
-###  Defining Data Models
+###  3.2-Defining Data Models
 
 Define your data models using the @ApiProperty() decorator in your DTOs.
 This populates the UI schema in Swagger.
@@ -90,7 +103,7 @@ export class CreateUserDto {
 }
 ```
 
-### Further Description 
+### 3.3-Further Description 
 
 Enhance your endpoint documentation with:
 
@@ -123,7 +136,7 @@ export class UserController {
 ```
 
 
-##Notes on RESTful API Design: 
+## Notes on RESTful API Design: 
 
 REST is an architectural style for designing networked applications.
 It uses standard HTTP methods (GET, POST, PUT, DELETE, etc.) to access and manipulate resources.
@@ -141,3 +154,18 @@ PUT /user/:id → update a user
 
 Following this convention keeps your API clean, consistent, and RESTful.
 
+# Additional Resources
+
+## Additional Resources
+
+- [NestJS Swagger Documentation](https://docs.nestjs.com/openapi/introduction)  
+  Official NestJS documentation for Swagger integration
+
+- [OpenAPI Specification](https://spec.openapis.org/oas/v3.1.0)  
+  The standard specification for API documentation
+
+- [Swagger UI](https://swagger.io/tools/swagger-ui/)  
+  Interactive API documentation tool
+
+- [REST API Best Practices](https://www.freecodecamp.org/news/rest-api-best-practices/)  
+  Guide to building better REST APIs
