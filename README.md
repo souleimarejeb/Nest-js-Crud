@@ -1,4 +1,4 @@
-### Swagger: Open Source Tool for API Design & Documentation at Scale
+# Swagger: Open Source Tool for API Design & Documentation at Scale
 Swagger is an open-source tool that helps you design, document, and test REST APIs at scale.
 This guide shows how to integrate Swagger with a NestJS application.
 
