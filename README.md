@@ -154,7 +154,6 @@ PUT /user/:id → update a user
 
 Following this convention keeps your API clean, consistent, and RESTful.
 
-# Additional Resources
 
 ## Additional Resources
 
