@@ -139,24 +139,17 @@ Migrations act as checkpoints for your database schema: each migration records t
 
 
 ### Why use migrations?
-✅ Safer than synchronize: true
-✅ Schema changes are version-controlled
-✅ You can undo (revert) or redo migrations
-✅ Keeps your production database stable
+✅ Safer than synchronize: true\
+✅ Schema changes are version-controlled\
+✅ You can undo (revert) or redo migrations\
+✅ Keeps your production database stable\
 
 
 ## Getting Started
-### 1.Disable auto-sync
 
-In your TypeORM configuration, set:
+### 1.Add migrations configuration
 
-```ts
-synchronize: false
-```
-
-### 2.Add migrations configuration
-
-In src/database/config.ts, make sure to add the migrations option and set synchronize to false. 
+In `src/database/config.ts`, make sure to add the migrations option and set synchronize to false. 
 
 Example:
 
@@ -189,9 +182,9 @@ export const dataSourceOptions: DataSourceOptions = {
 export const AppDataSource = new DataSource(dataSourceOptions);
 ```
 
-### 3.Load TypeORM in your AppModule
+### 2.Load TypeORM in your AppModule
 
-In src/modules/app/app.module.ts:
+In `src/modules/app/app.module.ts`:
 
 ```ts
 import { Module } from '@nestjs/common';
@@ -218,7 +211,7 @@ export class AppModule {
 ☝️ TypeOrmModule.forRootAsync with useFactory is required when passing a plain DataSourceOptions object.
 
 
-### 4.Add migration scripts
+### 3.Add migration scripts
 
 Add the following scripts to your package.json:
 
