@@ -4,22 +4,23 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from '../user/user.module';
+import { dataSourceOptions } from 'src/database/config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    // TypeOrmModule.forRootAsync(ConnectionConfiguration) // uncomment this if you want to use the data-source.ts
+    TypeOrmModule.forRootAsync(dataSourceOptions),  //  this if you want to use the config.ts
     // else use this directly 
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      entities: ['dist/**/**/*.entity{.ts,.js}'],
-      synchronize: true,
-    }),
+    // TypeOrmModule.forRoot({
+    //   type: 'mysql',
+    //   host: process.env.DB_HOST,
+    //   port: Number(process.env.DB_PORT),
+    //   username: process.env.DB_USERNAME,
+    //   password: process.env.DB_PASSWORD,
+    //   database: process.env.DB_NAME,
+    //   entities: ['dist/**/**/*.entity{.ts,.js}'],
+    //   synchronize: true,
+    // }),
     UserModule,
   ],
   controllers: [AppController],

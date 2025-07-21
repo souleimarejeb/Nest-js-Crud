@@ -20,7 +20,7 @@ export const dataSourceOptions: DataSourceOptions = {
     UserEntity,
   ],
   migrations: ['dist/database/migrations/*.js'],
-  synchronize: true,
+  synchronize: false,
 };
 
 export const AppDataSource = new DataSource(dataSourceOptions);
