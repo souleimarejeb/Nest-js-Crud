@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/database/models/user.entity';
 import { Repository } from 'typeorm';
@@ -12,16 +12,21 @@ export class UserService {
     ) { }
 
     async findAll(): Promise<UserEntity[]> {
-        return this.userRepository.find();
+
+        const user = await this.userRepository.find();
+        if (!user) throw new ConflictException();
+        return user;
     }
 
     async findOne(id: string): Promise<UserEntity> {
-        return this.userRepository.findOne({ where: { id } });
+        const foundUser = await this.userRepository.findOne({ where: { id } });
+        if (!foundUser) throw new NotFoundException("User Not Found");
+        return foundUser;
     }
 
     async create(userData: Partial<UserEntity>): Promise<UserEntity> {
         const user = this.userRepository.create(userData);
-        return this.userRepository.save(user);
+        return await this.userRepository.save(user);
     }
 
     async update(id: string, userData: Partial<UserEntity>): Promise<UserEntity> {
