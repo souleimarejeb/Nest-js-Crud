@@ -6,9 +6,7 @@ import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
-  const loggerInstance = app.get(Logger);
-  app.useGlobalFilters(new AllExceptionsFilter(loggerInstance));
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   const config = new DocumentBuilder()
     .setTitle('users API')

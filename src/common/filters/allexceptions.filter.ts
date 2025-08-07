@@ -3,7 +3,7 @@ import { Response } from 'express';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-    constructor(private logger: Logger) { }
+    private readonly logger = new Logger(AllExceptionsFilter.name);
 
     catch(exception: unknown, host: ArgumentsHost) {
         const ctx = host.switchToHttp();

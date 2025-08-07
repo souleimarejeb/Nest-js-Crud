@@ -1,31 +1,74 @@
-# Swagger Integration for NestJS REST APIs
+# Exception Filters Implementation in NestJS
 
-Swagger is an open-source toolset that helps you design, build, document, and consume RESTful APIs. 
-This guide demonstrates how to integrate Swagger with a NestJS application to generate interactive API documentation.
+Exception Filters in NestJS provide a centralized mechanism for handling exceptions thrown during the lifecycle of an HTTP request.
 
+Think of them as **NestJS’s version of a global `try/catch`**, integrated into the framework, capable of catching unhandled exceptions thrown from controllers, services, pipes, guards, or interceptors.
 
-## Table of Contents
-- [Installation](#installation)
-- [Basic Setup](#basic-setup)
-- [API Documentation](#api-documentation)
-  - [Controllers and Routes](#controllers-and-routes)
-  - [Data Models](#data-models)
-  - [Responses and Request Bodies](#responses-and-request-bodies)
-- [RESTful API Design Best Practices](#restful-api-design-best-practices)
-- [Accessing Swagger UI](#accessing-swagger-ui)
-- [Additional Resources](#additional-resources)
+---
 
+## 1. Create a Global Exception Filter
 
-## 1.Installation 
-To implement Swagger in your REST API, first install the required dependency:
+Create a new file at:
 
-``` ts 
- npm install --save @nestjs/swagger
+`common/filters/all-exceptions.filter.ts`
+
+```ts
+import {
+  Catch,
+  ExceptionFilter,
+  ArgumentsHost,
+  HttpStatus,
+  HttpException,
+  Logger,
+} from '@nestjs/common';
+import { Response, Request } from 'express';
+
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+
+private readonly logger = new Logger(AllExceptionsFilter.name);
+
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message = 'Internal server error';
+
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      const res = exception.getResponse();
+      message =
+        typeof res === 'string'
+          ? res
+          : (res as any).message || 'Unexpected error';
+    } else if (exception instanceof Error) {
+      message = exception.message;
+    }
+
+    this.logger.error(
+            `${request.method} ${request.url} ${status} error:{ ${message} } `
+        );
+
+    response.status(status).json({
+      statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      error: message,
+    });
+  }
+}
 ```
+### Note 
+The @Catch() decorator without parameters makes this filter a global handler for all exception types.
 
-## 2.Implementing Swagger in main.ts
 
-Once the installation is complete, open the main.ts file and initialize Swagger using the SwaggerModule class:
+## 2. Registering  Exception Filter 
+
+There are multiple ways to register an exception filter in NestJS. Here are the most common ones:
+
+### 2.1. Registering Globally in `main.ts`
 
 ``` ts 
 
@@ -36,132 +79,183 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.useGlobalFilters(new AllExceptionsFilter());
+
   const config = new DocumentBuilder()
-    .setTitle('Users Api')
-    .setDescription('The users API description')
+    .setTitle('users API')
+    .setDescription('API description')
     .setVersion('1.0')
     .addTag('users')
     .build();
+
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(3000);
 }
+
 bootstrap();
 
 ``` 
-### Note:
-SwaggerModule.createDocument() generates the Swagger document based on your app's routes and metadata.
-SwaggerModule.setup('api', ...) serves the Swagger UI at /api.
 
-Run the following command to start the HTTP server:
+### 2.2. Registering at the Controller Level
 
-```ts
- npm run start
-
-```
-Then open your browser and navigate to:
-
-👉 http://localhost:3000/api
-
-Swagger UI will automatically reflect all your endpoints.
-
-
-
-## 3.Annotating APIs with Swagger Decorators
-
-### 3.1-controllers and routes 
-
-Decorate your controllers and routes with appropriate Swagger decorators to group and describe them:
-
-
-```ts
-import { Controller, Get } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+``` ts 
 
 @ApiTags('USERS MGMT')
-@Controller('users')
+@Controller('user')
+@UseFilters(new AllExceptionsFilter())
 export class UserController {
-  @Get()
-  findAllUsers(): string {
-    return this.userService.findAll();
+
+    constructor(private userService: UserService) { }
+    
+ @Get(':id')
+    async findOne(@Param('id') id: string): Promise<UserEntity> {
+        return this.userService.findOne(id);
+    }
+}
+
+``` 
+
+
+### 2.3. Registering at the Module Level (Local Filter)
+In your module file `(e.g., user.module.ts)`:
+
+``` ts
+import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
+import { AllExceptionsFilter } from '../common/filters/all-exceptions.filter';
+import { UserController } from './user.controller';
+import { UserService } from './user.service';
+
+@Module({
+  controllers: [UserController],
+  providers: [
+    UserService,
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+  ],
+})
+export class UserModule {}
+```
+
+
+## 3. Using the Filter in Your Service 
+
+Throw an HTTP Exception as needed:
+
+``` ts
+
+import { NotFoundException } from '@nestjs/common';
+
+ async findOne(id: string): Promise<UserEntity> {
+  const foundUser = await this.userRepository.findOne({ where: { id } });
+  if (!foundUser) {
+    throw new NotFoundException('User Not Found');
+  }
+  return foundUser;
+}
+```
+
+
+###  Where to Throw Exceptions: Controller or Service?
+
++ ✅ Best Practice: Throw exceptions in the service layer, where business logic lives.
+This keeps your controller clean and follows the Separation of Concerns (SoC) principle.
+
+
+## 4. Optional: Creating Custom Exceptions:
+
+You can also define custom exceptions:
+
+``` ts 
+import { HttpException, HttpStatus } from '@nestjs/common';
+
+export class CustomForbiddenException extends HttpException {
+  constructor(message: string = 'Forbidden') {
+    super({ message }, HttpStatus.FORBIDDEN);
   }
 }
 ```
 
-###  3.2-Defining Data Models
+Usage:
+``` ts 
+throw new CustomForbiddenException('You do not have permission to access this resource');
 
-Define your data models using the @ApiProperty() decorator in your DTOs.
-This populates the UI schema in Swagger.
+```
+
+## 5. Handling Uncaught JavaScript Errors
+
+The global exception filter also catches standard JavaScript runtime errors such as:
+
+- `TypeError`
+- `ReferenceError`
+- `SyntaxError`
+- Any unhandled `Error` instance
+
+These are **not** instances of `HttpException`, so the filter will return:
+
+- **Status:** 500 Internal Server Error
+- **Message:** The `Error.message` (or a generic one if not available)
+
+### 🔧 Example: Throwing a non-HTTP error
 
 ```ts
-import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateUserDto {
-  @ApiProperty({ example: '1234567890', required: true })
-  phoneNumber: string;
-}
-```
+async findOne(id: string): Promise<UserEntity> {
+  const foundUser = await this.userRepository.findOne({ where: { id } });
 
-### 3.3-Further Description 
-
-Enhance your endpoint documentation with:
-
-✅ @ApiResponse() — to describe response status codes and messages
-
-✅ @ApiBody() — to define the request body schema
-
-Example:
-
-```ts 
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiBody, ApiResponse } from '@nestjs/swagger';
-import { CreateUserDto } from './create-user.dto';
-
-@ApiTags('USERS MGMT')
-@Controller('users')
-export class UserController {
-  @Post()
-  @ApiResponse({ status: 201, description: 'The record has been successfully created.' })
-  @ApiResponse({ status: 403, description: 'Forbidden.' })
-  @ApiBody({
-    type: CreateUserDto,
-    description: 'JSON structure for the user object',
-  })
-  async create(@Body() createUserDto: CreateUserDto) {
-    this.userService.create(createUserDto);
+  if (!foundUser) {
+    // Simulating a runtime error (instead of using Nest's NotFoundException)
+    throw new Error('Something went wrong while fetching the user');
   }
+
+  return foundUser;
+}
+```
+
+###  Response Example:
+``` json 
+{
+  "statusCode": 500,
+  "timestamp": "2025-08-07T15:21:10.000Z",
+  "path": "/user/123",
+  "error": "Something went wrong while fetching the user"
 }
 
 ```
 
-
-## Notes on RESTful API Design: 
-
-REST is an architectural style for designing networked applications.
-It uses standard HTTP methods (GET, POST, PUT, DELETE, etc.) to access and manipulate resources.
-These HTTP methods already describe the intent of each endpoint.
-
-🚫 Avoid adding redundant action names like /getUser or /updateUser — instead, use /user with the correct HTTP method.
-
-✅ Examples:
-
-GET /user → fetch users
-
-POST /user → create a user
-
-PUT /user/:id → update a user
-
-Following this convention keeps your API clean, consistent, and RESTful.
+### Note :
+This is helpful during development but in production, consider wrapping such logic in meaningful custom exceptions.
 
 
-## Additional Resources
+## 6. Sample Error Response Format
 
-- [NestJS Swagger Documentation](https://docs.nestjs.com/openapi/introduction)  
-  Official NestJS documentation for Swagger integration
+``` json
+{
+  "statusCode": 404,
+  "timestamp": "2025-08-07T15:12:34.000Z",
+  "path": "/user/123",
+  "error": "User Not Found"
+}
+```
+## 7. Additional Resources
 
-- [OpenAPI Specification](https://spec.openapis.org/oas/v3.1.0)  
-  The standard specification for API documentation
+- [NestJS Exception-Filters Documentation](https://docs.nestjs.com/exception-filters)  
+  Official NestJS documentation for Exception-Filters Implementation
 
-- [Swagger UI](https://swagger.io/tools/swagger-ui/)  
-  Interactive API documentation tool
+
+
+## 8. Summary
+
+*  Use @Catch() to define global or scoped exception filters.
+
+* Register filters globally (app.useGlobalFilters) or locally via @UseFilters() or the APP_FILTER token.
+
+* Catch both HTTP exceptions (HttpException) and unexpected runtime errors (e.g., TypeError, Error, etc.).
+
+* Keep your controller lean by throwing exceptions inside the service layer.
+
+* Optionally, define custom exception classes to improve clarity and control over your API error responses.
