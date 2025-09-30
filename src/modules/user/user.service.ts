@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { LogExecutionTime } from 'src/common/decorators/LogExecutionTime.decorator';
 import { UserEntity } from 'src/database/models/user.entity';
 import { Repository } from 'typeorm';
 
@@ -11,7 +12,10 @@ export class UserService {
         private userRepository: Repository<UserEntity>,
     ) { }
 
+    @LogExecutionTime()
     async findAll(): Promise<UserEntity[]> {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log('Task completed!');
         return this.userRepository.find();
     }
 
